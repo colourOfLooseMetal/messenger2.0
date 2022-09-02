@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- <script src="./ua-parser.min.js"></script> -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js">
+    </script>
+</head>
+
+<body>
+    <div id="newUser">
+        <button type="button" onclick="initAll()">Yeah use cookies</button>
+    </div>
+    <div id="messages">
+
+    </div>
+        <div class="form-group">
+            <input type="input" class="form-control input-lg" id="message-text" placeholder="" />
+            <button type="button" onclick="sendMessage()">Send</button>
+        </div>
+    
+</body>
+<script>
+    //fetch all messages and update once a second
+    function oneSecondFunction() {
+        fetch('/getMguMessages', {
+            method: "post",
+            //make sure to serialize your JSON body
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: "nothing, sry shivan :'("
+            })
+        }).then(response => response.json())
+        .then(function(response) {
+            //the response is an object with memeGirlsAllMsgs being an array, where id is 1 and message is 0
+                msgObj = JSON.parse(response)
+                content = ''
+                //join all messages as paragraphs
+                for(i=0;i<msgObj.memeGirlAllMsgs.length;i++){
+                    content += "<p>user"+msgObj.memeGirlAllMsgs[i][1]+":  "+msgObj.memeGirlAllMsgs[i][0]+"</p>"
+                }
+                //throw em in the messages div
+                document.getElementById("messages").innerHTML = content;
+            });
+    }
+
+    //init user on page visit
+    function initUserShit() {
+        console.log("starting init user shit");
+        initUser = true;
+        //if local storage has client id
+        if (localStorage.hasOwnProperty("clientId")) {
+            cli_id = localStorage.getItem("clientId")
+            //dont need to init user
+            initUser = false
+            //but if user id is undefined for some reason then do need to init
+            console.log(typeof cli_id)
+            console.log("you exist", cli_id)
+            if(cli_id == "undefined" || cli_id === undefined){
+                console.log("id undefined, initing")
+                initUser = true;
+            }
+            // setUpUser(cli_id);
+        }
+        //create user
+        if(initUser) {
+            fetch('/newMGU', {
+            method: "post",
+            //make sure to serialize your JSON body
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: "nothing, sry again shivan, this one sends nothing lol, can i just remove it? idk i have one functional post send kinda function and am resusing it for everything, was a throw away project lol"
+            })
+        }).then(response => response.json())
+        .then(function(response) {
+            //shouldnt json be  parsed in last step? idk gotta do this
+                console.log(JSON.parse(response))
+                response = JSON.parse(response);
+                //save client id to local storage
+                cli_id = localStorage.setItem("clientId",response["id"]) // here someid from your google analytics fetch
+                cli_id = localStorage.getItem("clientId")
+                console.log("you exist now!", cli_id)
+                $(function(){
+                    //start checking for messages
+                setInterval(oneSecondFunction, 1000);
+                });
+            });
+            
+        }
+        else{
+            //start checking for messages
+            $(function(){
+            setInterval(oneSecondFunction, 1000);
+            });
+        }
+
+    //send message
+    }
+    function sendMessage() {
+		var message = $("#message-text").val();
+        fetch('/newMGUmessage', {
+            method: "post",
+            //make sure to serialize your JSON body
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: localStorage.getItem("clientId"),
+                message: message
+            })
+        })
+
+    }
+    //called when cookie button is pressed, should add a thing where we check that user exists and dont show button at all and skip to initusershit
+    function initAll(){
+        initUserShit();
+    }
+
+
+
+
+    //when enter is pressed send message, todo : clear input field
+    window.addEventListener("load", function () {
+		var input = document.getElementById("message-text");
+		input.addEventListener("keyup", function (event) {
+			//if the enter key is pressed, dont submit the form
+			if (event.keyCode === 13) {
+				event.preventDefault();
+                if (event.keyCode === 13) {
+				event.preventDefault();
+				sendMessage();
+			}
+
+			}
+		});
+
+		console.log("loaded")
+	});
+
+</script>
+
+</html>
